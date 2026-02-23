@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📱 GPA & CGPA Calculator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #eef2f7;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+    color: #333;
+}
+.container {
+    max-width: 900px;
+    margin: auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+label {
+    display: block;
+    margin: 10px 0 5px;
+    font-weight: 500;
+    text-align: left;
+}
+select {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+button {
+    padding: 12px 25px;
+    margin: 10px 5px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: #3498db;
+    color: white;
+    transition: 0.3s;
+}
+button:hover { background-color: #2980b9; }
+.subject {
+    margin: 15px 0;
+    text-align: left;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+}
+#result table {
+    width: 100%;
+    max-width: 500px;
+    margin: 20px auto 0;
+    border-collapse: collapse;
+}
+#result th, #result td {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    text-align: center;
+    font-weight: 500;
+}
+#result th { background-color: #3498db; color: white; }
+.gpa-high { background-color: #2ecc71; color: #fff; }
+.gpa-mid { background-color: #f1c40f; color: #fff; }
+.gpa-low { background-color: #e74c3c; color: #fff; }
+/* Dialogue box */
+#dialogue {
+    margin:20px 0;
+    padding:15px;
+    background-color:#dfe6e9;
+    border-radius:8px;
+    color:#2d3436;
+    font-weight:500;
+    font-size:16px;
+}
+/* Responsive */
+@media (max-width: 768px) {
+    h1 { font-size: 1.5rem; }
+    button, select { font-size: 15px; }
+}
+@media (max-width: 480px) {
+    h1 { font-size: 1.3rem; }
+    button, select { font-size: 14px; width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>GPA & CGPA Calculator</h1>
+
+<div id="dialogue">
+Select your semester and grades to calculate your GPA and CGPA.
+</div>
+
+<div>
+    <label for="year">Select Year:</label>
+    <select id="year" onchange="generateSemesters()">
+        <option value="">--Select Year--</option>
+        <option value="1">Year 1</option>
+        <option value="2">Year 2</option>
+    </select>
+</div>
+
+<div id="semester-section" style="display:none;">
+    <label for="semester">Select Semester:</label>
+    <select id="semester" onchange="generateSubjects()">
+        <option value="">--Select Semester--</option>
+    </select>
+</div>
+
+<div id="subjects-container"></div>
+
+<button onclick="calculateSemesterGPA()">Semester GPA</button>
+<button onclick="calculateYearGPA()">Year GPA</button>
+<button onclick="calculateCGPA()">CGPA</button>
+
+<div id="result"></div>
+
+<canvas id="gpaChart" style="max-width: 600px; margin:20px auto;"></canvas>
+
+<div style="margin-top:30px; font-size:14px; color:#888; text-align:center;">
+    &copy; 2026 All rights reserved By @itz_me_lokesh.
+</div>
+
+<div style="margin-top:10px; font-size:14px; color:#555; text-align:center;">
+    Note: This GPA & CGPA calculator is only for IT students studying at Kings College of Engineering, Punalkulam.
+</div>
+
+</div>
+
+<script>
+const gradePoints = { "O":10, "A+":9, "A":8, "B+":7, "B":6, "C":5, "U":0 };
+const subjectsData = {
+    1: {
+        1: { 
+            "Heritage of Tamils":1, 
+            "Professional English - I":2, 
+            "Engineering Mathematics I":4, 
+            "Environmental Sciences and Sustainability":2, 
+            "Problem Solving and Python Programming":3, 
+            "Engineering Graphics":4, 
+            "Engineering Practices Laboratory":2, 
+            "Problem Solving and Python Lab":2, 
+            "Communication Skills Lab":2 
+        },
+        2: { 
+            "Professional English II":2, 
+            "Probability and Statistics":4, 
+            "Physics for Information Science":3, 
+            "Engineering Chemistry":3, 
+            "Basic Electrical & Electronics Engineering":3, 
+            "Programming in C":3, 
+            "Tamils and Technology":1, 
+            "Physics & Chemistry Lab":2, 
+            "Programming in C Lab":2 
+        }
+    },
+    2: {
+        3: { 
+            "Discrete Mathematics":4, 
+            "Digital Principle and Computer Organization":4, 
+            "Data Structures":3, 
+            "Database Management Systems":3, 
+            "Object Oriented Programming":3, 
+            "Design Thinking":1, 
+            "Data Structures Lab":2, 
+            "DBMS Lab":2, 
+            "OOP Lab":2 
+        },
+        4:{"Operating Systems":3,
+           "Object Oriented Software Engineering":3,
+           "Web Technologies":4,
+           "Computer Networks and Data Communications":3,
+           "Machine Learning ":4,
+           "universal human values-II":3,
+           "Operating Systems Laboratory":2,
+           "Communication Skills Laboratory-II":2,
+
+        }
+    }
+};
+
+let currentSubjects = {};
+let gpaChart;
+
+function setDialogue(msg){
+    document.getElementById("dialogue").innerText = msg;
+}
+
+function generateSemesters(){
+    const year=document.getElementById("year").value;
+    const semSelect=document.getElementById("semester");
+    semSelect.innerHTML='<option value="">--Select Semester--</option>';
+    document.getElementById("semester-section").style.display=year?"block":"none";
+    document.getElementById("subjects-container").innerHTML="";
+    if(!year) return;
+    setDialogue(`Year ${year} selected. Choose your semester to proceed.`);
+    for(let sem in subjectsData[year]){
+        semSelect.innerHTML+=`<option value="${sem}">Semester ${sem}</option>`;
+    }
+}
+
+function generateSubjects(){
+    const year=document.getElementById("year").value;
+    const sem=document.getElementById("semester").value;
+    const container=document.getElementById("subjects-container");
+    container.innerHTML="";
+    if(!sem) return;
+    currentSubjects = subjectsData[year][sem];
+    setDialogue(`Semester ${sem} selected. Enter your grades below.`);
+    for(let subject in currentSubjects){
+        const div=document.createElement("div");
+        div.className="subject";
+        div.innerHTML=`<label>${subject} (Credits: ${currentSubjects[subject]}): </label>
+        <select id="${subject}">
+            <option value="">--Select Grade--</option>
+            <option value="O">O</option>
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="B+">B+</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="U">U</option>
+        </select>`;
+        container.appendChild(div);
+    }
+}
+
+function getGPAColor(gpa){
+    if(gpa>=8) return 'gpa-high';
+    if(gpa>=6) return 'gpa-mid';
+    return 'gpa-low';
+}
+
+function updateChart(gpas, labels){
+    if(gpaChart) gpaChart.destroy();
+    const ctx=document.getElementById('gpaChart').getContext('2d');
+    gpaChart=new Chart(ctx,{
+        type:'line',
+        data:{
+            labels: labels,
+            datasets:[{
+                label:'GPA Trend',
+                data:gpas,
+                borderColor:'#3498db',
+                backgroundColor:'rgba(52,152,219,0.2)',
+                fill:true,
+                tension:0.3,
+                pointRadius:6
+            }]
+        },
+        options:{
+            responsive:true,
+            plugins:{
+                tooltip:{
+                    enabled:true,
+                    callbacks:{
+                        label: function(context){ return `GPA: ${context.parsed.y.toFixed(2)}`; }
+                    }
+                },
+                legend:{display:false}
+            },
+            scales:{y:{min:0,max:10,stepSize:1}}
+        }
+    });
+}
+
+function calculateSemesterGPA(){
+    let totalCredits=0, totalPoints=0, valid=true;
+    for(let subject in currentSubjects){
+        const grade=document.getElementById(subject).value;
+        if(!grade || !(grade in gradePoints)){ valid=false; break; }
+        totalCredits+=currentSubjects[subject];
+        totalPoints+=gradePoints[grade]*currentSubjects[subject];
+    }
+    if(!valid){ alert("Please select all grades!"); return; }
+    const gpa=(totalPoints/totalCredits).toFixed(2);
+    document.getElementById("result").innerHTML=`<table>
+        <tr><th>Semester GPA</th></tr>
+        <tr class="${getGPAColor(gpa)}"><td>${gpa}</td></tr></table>`;
+    setDialogue(`Semester GPA calculated! Keep up the good work!`);
+    updateChart([parseFloat(gpa)], ['Selected Semester']);
+}
+
+function calculateYearGPA(){
+    const year=document.getElementById("year").value;
+    if(!year){ alert("Select year!"); return; }
+    let semesterGPAs=[];
+    for(let sem in subjectsData[year]){
+        let totalCredits=0, totalPoints=0, valid=true;
+        for(let subject in subjectsData[year][sem]){
+            const input=document.getElementById(subject);
+            if(!input){ valid=false; break; }
+            const grade=input.value;
+            if(!grade || !(grade in gradePoints)){ valid=false; break; }
+            totalCredits+=subjectsData[year][sem][subject];
+            totalPoints+=gradePoints[grade]*subjectsData[year][sem][subject];
+        }
+        if(!valid){ alert(`Select all grades for Semester ${sem}`); return; }
+        semesterGPAs.push(totalPoints/totalCredits);
+    }
+    const yearGPA=(semesterGPAs.reduce((a,b)=>a+b,0)/semesterGPAs.length).toFixed(2);
+    let html=`<table><tr><th>Semester</th><th>GPA</th></tr>`;
+    semesterGPAs.forEach((gpa,index)=>{
+        html+=`<tr class="${getGPAColor(gpa)}"><td>Semester ${parseInt(index)+1}</td><td>${gpa.toFixed(2)}</td></tr>`;
+    });
+    html+=`<tr><th>Year GPA</th><th>${yearGPA}</th></tr></table>`;
+    document.getElementById("result").innerHTML=html;
+    setDialogue(`Year GPA calculated! Keep aiming higher!`);
+    updateChart(semesterGPAs, Object.keys(subjectsData[year]));
+}
+
+function calculateCGPA(){
+    let semesterGPAs=[];
+    for(let year in subjectsData){
+        for(let sem in subjectsData[year]){
+            let totalCredits=0,totalPoints=0,valid=false;
+            for(let subject in subjectsData[year][sem]){
+                const input=document.getElementById(subject);
+                if(!input) continue;
+                const grade=input.value;
+                if(!grade || !(grade in gradePoints)) continue;
+                valid=true;
+                totalCredits+=subjectsData[year][sem][subject];
+                totalPoints+=gradePoints[grade]*subjectsData[year][sem][subject];
+            }
+            if(valid) semesterGPAs.push(totalPoints/totalCredits);
+        }
+    }
+    if(semesterGPAs.length===0){ alert("Select grades to calculate CGPA!"); return; }
+    const cgpa=(semesterGPAs.reduce((a,b)=>a+b,0)/semesterGPAs.length).toFixed(2);
+    let html=`<table><tr><th>Semester</th><th>GPA</th></tr>`;
+    semesterGPAs.forEach((gpa,index)=>{
+        html+=`<tr class="${getGPAColor(gpa)}"><td>Semester ${parseInt(index)+1}</td><td>${gpa.toFixed(2)}</td></tr>`;
+    });
+    html+=`<tr><th>CGPA</th><th>${cgpa}</th></tr></table>`;
+    document.getElementById("result").innerHTML=html;
+    setDialogue(`CGPA calculated! Excellent progress!`);
+    updateChart(semesterGPAs, semesterGPAs.map((_,i)=>`Sem ${i+1}`));
+}
+</script>
+</body>
+</html>
